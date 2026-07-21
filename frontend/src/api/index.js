@@ -52,3 +52,21 @@ export function groupBuyNotify(data) {
         data,
     });
 }
+
+/** 秒杀 - 查询秒杀活动列表/详情 */
+export function querySeckillActivity(data) {
+    return request({
+        url: '/api/v1/gbm/seckill/query_seckill_activity',
+        method: 'post',
+        data,
+    });
+}
+
+/** 秒杀 - 执行秒杀 */
+export function doSeckill(data) {
+    return request({
+        url: '/api/v1/gbm/seckill/do_seckill',
+        method: 'post',
+        data,
+    });
+}

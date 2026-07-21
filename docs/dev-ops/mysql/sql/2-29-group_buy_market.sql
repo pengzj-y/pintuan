@@ -437,6 +437,68 @@ VALUES
 UNLOCK TABLES;
 
 
+# 转储表 seckill_activity
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `seckill_activity`;
+
+CREATE TABLE `seckill_activity` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+  `activity_id` bigint NOT NULL COMMENT '活动ID',
+  `goods_id` varchar(16) NOT NULL COMMENT '商品ID',
+  `seckill_stock` int NOT NULL DEFAULT '0' COMMENT '秒杀库存',
+  `seckill_remain_stock` int NOT NULL DEFAULT '0' COMMENT '秒杀剩余库存',
+  `seckill_price` decimal(8,2) NOT NULL COMMENT '秒杀价格',
+  `seckill_start_time` datetime NOT NULL COMMENT '秒杀开始时间',
+  `seckill_end_time` datetime NOT NULL COMMENT '秒杀结束时间',
+  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '状态（0创建、1生效、2过期、3废弃）',
+  `tag_id` varchar(32) DEFAULT NULL COMMENT '人群标签规则标识（为空则不限制）',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_activity_id` (`activity_id`),
+  KEY `idx_status_time` (`status`,`seckill_start_time`,`seckill_end_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='秒杀活动';
+
+LOCK TABLES `seckill_activity` WRITE;
+/*!40000 ALTER TABLE `seckill_activity` DISABLE KEYS */;
+
+INSERT INTO `seckill_activity` (`id`, `activity_id`, `goods_id`, `seckill_stock`, `seckill_remain_stock`, `seckill_price`, `seckill_start_time`, `seckill_end_time`, `status`, `tag_id`, `create_time`, `update_time`)
+VALUES
+	(1,100130,'9890001',100,100,39.00,'2026-07-21 00:00:00','2026-12-31 23:59:59',1,'RQ_KJHKL98UU78H66554GFDV','2026-07-21 10:00:00','2026-07-21 10:00:00'),
+	(2,100131,'9890002',50,50,59.00,'2026-07-21 00:00:00','2026-12-31 23:59:59',1,NULL,'2026-07-21 10:00:00','2026-07-21 10:00:00'),
+	(3,100132,'9890004',200,200,19.00,'2026-07-21 00:00:00','2026-12-31 23:59:59',1,NULL,'2026-07-21 10:00:00','2026-07-21 10:00:00');
+
+/*!40000 ALTER TABLE `seckill_activity` ENABLE KEYS */;
+UNLOCK TABLES;
+
+
+# 转储表 seckill_order
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `seckill_order`;
+
+CREATE TABLE `seckill_order` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+  `user_id` varchar(64) NOT NULL COMMENT '用户ID',
+  `activity_id` bigint NOT NULL COMMENT '活动ID',
+  `goods_id` varchar(16) NOT NULL COMMENT '商品ID',
+  `order_id` varchar(16) NOT NULL COMMENT '订单ID',
+  `source` varchar(8) NOT NULL COMMENT '渠道',
+  `channel` varchar(8) NOT NULL COMMENT '来源',
+  `original_price` decimal(8,2) NOT NULL COMMENT '原始价格',
+  `seckill_price` decimal(8,2) NOT NULL COMMENT '秒杀价格',
+  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '状态（0初始锁定、1消费完成、2用户退单）',
+  `out_trade_no` varchar(16) NOT NULL COMMENT '外部交易单号-确保外部调用唯一幂等',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_order_id` (`order_id`),
+  UNIQUE KEY `uq_user_activity` (`user_id`,`activity_id`),
+  KEY `idx_out_trade_no` (`out_trade_no`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='秒杀订单';
+
+
 
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

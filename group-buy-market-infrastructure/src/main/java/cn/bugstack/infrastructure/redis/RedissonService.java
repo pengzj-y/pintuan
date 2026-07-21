@@ -182,4 +182,14 @@ public class RedissonService implements IRedisService {
         return redissonClient.getBitSet(key);
     }
 
+    @Override
+    public <T> T evalScript(String script, java.util.List<String> keys, Object... args) {
+        RScript scriptObj = redissonClient.getScript();
+        return scriptObj.eval(RScript.Mode.READ_WRITE,
+                script,
+                RScript.ReturnType.INTEGER,
+                keys,
+                args);
+    }
+
 }

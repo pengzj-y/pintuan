@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { queryGroupBuyMarketConfig, lockMarketPayOrder } from '@/api/index'
+import { queryGroupBuyMarketConfig, lockMarketPayOrder, querySeckillActivity, doSeckill } from '@/api/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUser } from '@/composables/useUser'
 
@@ -24,6 +24,13 @@ const selectedProduct = ref(null)
 const showDetail = ref(false)
 const showUserPanel = ref(false)
 const joining = ref(false)
+
+// 秒杀相关状态
+const seckillList = ref([])
+const seckillLoading = ref(false)
+const seckillDetail = ref(null)
+const showSeckillDetail = ref(false)
+const seckilling = ref(false)
 
 // 当前选中的商品信息
 const currentProduct = computed(() => {
@@ -50,6 +57,25 @@ async function loadAllProducts() {
     } finally {
       loading.value[product.goodsId] = false
     }
+  }
+}
+
+// 加载秒杀列表
+async function loadSeckillList() {
+  seckillLoading.value = true
+  try {
+    const res = await querySeckillActivity({
+      userId: currentUserId.value,
+      source: 's01',
+      channel: 'c01',
+    })
+    if (res.code === '0000') {
+      seckillList.value = res.data || []
+    }
+  } catch {
+    // 忽略错误
+  } finally {
+    seckillLoading.value = false
   }
 }
 
@@ -94,15 +120,63 @@ async function joinGroup(teamId) {
   }
 }
 
+// 查看秒杀详情
+function openSeckillDetail(seckill) {
+  seckillDetail.value = seckill
+  showSeckillDetail.value = true
+}
+
+// 执行秒杀
+async function handleSeckill(seckill) {
+  seckilling.value = true
+  let outTradeNo = ''
+  for (let i = 0; i < 12; i++) {
+    outTradeNo += Math.floor(Math.random() * 10)
+  }
+  try {
+    const res = await doSeckill({
+      userId: currentUserId.value,
+      activityId: seckill.activityId,
+      source: 's01',
+      channel: 'c01',
+      outTradeNo: outTradeNo,
+    })
+    if (res.code === '0000') {
+      ElMessageBox.confirm(
+        `秒杀成功！\n订单号: ${res.data.orderId}\n秒杀价: ¥${res.data.seckillPrice}`,
+        '恭喜抢到了',
+        { confirmButtonText: '确定', type: 'success' }
+      )
+      showSeckillDetail.value = false
+      loadSeckillList()
+    }
+  } catch {
+    ElMessage.error('秒杀失败，请重试')
+  } finally {
+    seckilling.value = false
+  }
+}
+
 // 切换用户
 function handleSwitchUser(userId) {
   switchUser(userId)
   showUserPanel.value = false
   loadAllProducts()
+  loadSeckillList()
+}
+
+// 格式化倒计时
+function formatCountdown(seconds) {
+  if (!seconds || seconds <= 0) return '已结束'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  return `${h}时${m}分${s}秒`
 }
 
 onMounted(() => {
   loadAllProducts()
+  loadSeckillList()
 })
 </script>
 
@@ -178,6 +252,74 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 秒杀活动列表 -->
+    <div class="seckill-section">
+      <h2 class="section-title">⚡ 限时秒杀</h2>
+      <div v-if="seckillLoading" class="seckill-loading">
+        <el-icon class="loading-icon"><Loading /></el-icon>
+        <span>加载中...</span>
+      </div>
+      <div v-else-if="seckillList.length === 0" class="seckill-empty">
+        <el-empty description="暂无秒杀活动，敬请期待" />
+      </div>
+      <div v-else class="seckill-grid">
+        <div
+          v-for="seckill in seckillList"
+          :key="seckill.activityId"
+          class="seckill-card"
+          @click="openSeckillDetail(seckill)"
+        >
+          <div class="seckill-image">⚡</div>
+          <div class="seckill-info">
+            <h3 class="seckill-name">{{ seckill.goodsName }}</h3>
+            <div class="seckill-price-row">
+              <span class="seckill-price">¥{{ seckill.seckillPrice }}</span>
+              <span class="seckill-original">¥{{ seckill.originalPrice }}</span>
+            </div>
+            <div class="seckill-countdown">
+              <span class="countdown-icon">⏱</span>
+              <span>{{ formatCountdown(seckill.seckillCountdown) }}</span>
+            </div>
+          </div>
+          <div class="seckill-tag">秒杀</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 秒杀详情弹窗 -->
+    <el-dialog v-model="showSeckillDetail" width="90%" max-width="450px" :show-close="false" class="seckill-dialog">
+      <div v-if="seckillDetail" class="seckill-detail-content">
+        <div class="seckill-detail-header">
+          <div class="seckill-detail-image">⚡</div>
+          <div class="seckill-detail-info">
+            <h2 class="seckill-detail-name">{{ seckillDetail.goodsName }}</h2>
+            <div class="seckill-detail-price-row">
+              <span class="seckill-detail-price">¥{{ seckillDetail.seckillPrice }}</span>
+              <span class="seckill-detail-original">¥{{ seckillDetail.originalPrice }}</span>
+              <span class="seckill-detail-save">省¥{{ (seckillDetail.originalPrice - seckillDetail.seckillPrice).toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="seckill-detail-stats">
+          <div class="seckill-stat">
+            <span class="seckill-stat-num">{{ seckillDetail.seckillStock }}</span>
+            <span class="seckill-stat-label">剩余库存</span>
+          </div>
+          <div class="seckill-stat">
+            <span class="seckill-stat-num">{{ formatCountdown(seckillDetail.seckillCountdown) }}</span>
+            <span class="seckill-stat-label">距离结束</span>
+          </div>
+        </div>
+
+        <div class="seckill-detail-actions">
+          <el-button type="danger" size="large" :loading="seckilling" @click="handleSeckill(seckillDetail)" class="seckill-btn">
+            立即秒杀 ¥{{ seckillDetail.seckillPrice }}
+          </el-button>
+        </div>
+      </div>
+    </el-dialog>
 
     <!-- 商品详情弹窗 -->
     <el-dialog v-model="showDetail" width="90%" max-width="500px" :show-close="false" class="detail-dialog">
@@ -651,5 +793,228 @@ onMounted(() => {
 .detail-dialog :deep(.el-dialog__header) {
   padding: 0;
   margin: 0;
+}
+
+/* ========== Seckill Section ========== */
+.seckill-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+.seckill-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 0;
+  color: #999;
+}
+
+.seckill-empty {
+  padding: 20px 0;
+}
+
+.seckill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.seckill-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 12px;
+  border: 2px solid #ff6b00;
+}
+
+.seckill-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(255, 107, 0, 0.15);
+}
+
+.seckill-image {
+  width: 60px;
+  height: 60px;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.seckill-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.seckill-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin: 0 0 6px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seckill-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.seckill-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #e02e24;
+}
+
+.seckill-original {
+  font-size: 13px;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.seckill-countdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #ff6b00;
+}
+
+.countdown-icon {
+  font-size: 14px;
+}
+
+.seckill-tag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #ff6b00 0%, #ff9800 100%);
+  color: white;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* ========== Seckill Dialog ========== */
+.seckill-dialog :deep(.el-dialog__body) {
+  padding: 20px;
+}
+
+.seckill-dialog :deep(.el-dialog__header) {
+  padding: 0;
+  margin: 0;
+}
+
+.seckill-detail-content {
+  padding: 0;
+}
+
+.seckill-detail-header {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.seckill-detail-image {
+  width: 80px;
+  height: 80px;
+  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.seckill-detail-info {
+  flex: 1;
+}
+
+.seckill-detail-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+
+.seckill-detail-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.seckill-detail-price {
+  font-size: 26px;
+  font-weight: 700;
+  color: #e02e24;
+}
+
+.seckill-detail-original {
+  font-size: 14px;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.seckill-detail-save {
+  font-size: 12px;
+  color: #e02e24;
+  background: #fff0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.seckill-detail-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 16px 0;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 16px;
+}
+
+.seckill-stat {
+  text-align: center;
+}
+
+.seckill-stat-num {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.seckill-stat-label {
+  font-size: 12px;
+  color: #999;
+}
+
+.seckill-detail-actions {
+  padding-top: 8px;
+}
+
+.seckill-btn {
+  width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+  height: 44px;
+  background: linear-gradient(135deg, #e02e24 0%, #ff6b00 100%);
+  border: none;
 }
 </style>

@@ -273,6 +273,16 @@ public interface IRedisService {
 
     RBitSet getBitSet(String key);
 
+    /**
+     * 执行 Lua 脚本
+     *
+     * @param script Lua 脚本
+     * @param keys   键列表
+     * @param args   参数列表
+     * @return 执行结果
+     */
+    <T> T evalScript(String script, java.util.List<String> keys, Object... args);
+
     default int getIndexFromUserId(String userId) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");

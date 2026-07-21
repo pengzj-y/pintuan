@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.bugstack.infrastructure.dao.ISeckillActivityDao">
+
+    <resultMap id="dataMap" type="cn.bugstack.infrastructure.dao.po.SeckillActivity">
+        <id column="id" property="id"/>
+        <result column="activity_id" property="activityId"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="seckill_stock" property="seckillStock"/>
+        <result column="seckill_remain_stock" property="seckillRemainStock"/>
+        <result column="seckill_price" property="seckillPrice"/>
+        <result column="seckill_start_time" property="seckillStartTime"/>
+        <result column="seckill_end_time" property="seckillEndTime"/>
+        <result column="status" property="status"/>
+        <result column="tag_id" property="tagId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="querySeckillActivityByActivityId" parameterType="java.lang.Long" resultMap="dataMap">
+        select activity_id, goods_id, seckill_stock, seckill_remain_stock, seckill_price,
+               seckill_start_time, seckill_end_time, status, tag_id
+        from seckill_activity
+        where activity_id = #{activityId} and status = 1
+    </select>
+
+    <select id="queryOnlineSeckillActivityList" resultMap="dataMap">
+        select activity_id, goods_id, seckill_stock, seckill_remain_stock, seckill_price,
+               seckill_start_time, seckill_end_time, status, tag_id
+        from seckill_activity
+        where status = 1 and seckill_start_time &lt;= now() and seckill_end_time &gt;= now()
+        order by seckill_start_time asc
+    </select>
+
+    <update id="deductionStock" parameterType="java.lang.Long">
+        <![CDATA[
+            update seckill_activity
+            set seckill_remain_stock = seckill_remain_stock - 1, update_time = now()
+            where activity_id = #{activityId} and seckill_remain_stock > 0
+        ]]>
+    </update>
+
+    <update id="recoveryStock" parameterType="java.lang.Long">
+        update seckill_activity
+        set seckill_remain_stock = seckill_remain_stock + 1, update_time = now()
+        where activity_id = #{activityId} and seckill_remain_stock &lt; seckill_stock
+    </update>
+
+</mapper>
