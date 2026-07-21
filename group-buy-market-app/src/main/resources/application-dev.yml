@@ -26,8 +26,8 @@ thread:
 spring:
   datasource:
     username: root
-    password: ${MYSQL_PASSWORD}
-    url: jdbc:mysql://192.168.100.128:3306/group_buy_market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=false&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
+    password: 1314520zj
+    url: jdbc:mysql://192.168.100.128:3306/group_buy_market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
@@ -79,7 +79,7 @@ redis:
     config:
       host: 192.168.100.128
       port: 6379
-      password: ${REDIS_PASSWORD}
+      password: 20040829zjZJ
       pool-size: 10
       min-idle-size: 5
       idle-timeout: 30000

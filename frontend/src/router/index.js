@@ -30,6 +30,12 @@ const routes = [
         meta: { title: '动态配置' },
     },
     {
+        path: '/customer',
+        name: 'Customer',
+        component: () => import('@/views/CustomerView.vue'),
+        meta: { title: '拼团商城' },
+    },
+    {
         path: '/test',
         name: 'Test',
         component: () => import('@/views/TestView.vue'),

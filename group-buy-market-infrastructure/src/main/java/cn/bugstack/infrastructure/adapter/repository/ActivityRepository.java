@@ -148,10 +148,12 @@ public class ActivityRepository extends AbstractRepository implements IActivityR
         Map<String, GroupBuyOrder> groupBuyOrderMap = groupBuyOrders.stream()
                 .collect(Collectors.toMap(GroupBuyOrder::getTeamId, order -> order));
 
-        // 4. 转换数据
+        // 4. 转换数据（按 teamId 去重，同一队伍只展示一条）
         List<UserGroupBuyOrderDetailEntity> userGroupBuyOrderDetailEntities = new ArrayList<>();
+        Set<String> seenTeamIds = new HashSet<>();
         for (GroupBuyOrderList groupBuyOrderList : groupBuyOrderLists) {
             String teamId = groupBuyOrderList.getTeamId();
+            if (!seenTeamIds.add(teamId)) continue;
             GroupBuyOrder groupBuyOrder = groupBuyOrderMap.get(teamId);
             if (null == groupBuyOrder) continue;
 
@@ -204,10 +206,12 @@ public class ActivityRepository extends AbstractRepository implements IActivityR
         Map<String, GroupBuyOrder> groupBuyOrderMap = groupBuyOrders.stream()
                 .collect(Collectors.toMap(GroupBuyOrder::getTeamId, order -> order));
 
-        // 4. 转换数据
+        // 4. 转换数据（按 teamId 去重，同一队伍只展示一条）
         List<UserGroupBuyOrderDetailEntity> userGroupBuyOrderDetailEntities = new ArrayList<>();
+        Set<String> seenTeamIds = new HashSet<>();
         for (GroupBuyOrderList groupBuyOrderList : groupBuyOrderLists) {
             String teamId = groupBuyOrderList.getTeamId();
+            if (!seenTeamIds.add(teamId)) continue;
             GroupBuyOrder groupBuyOrder = groupBuyOrderMap.get(teamId);
             if (null == groupBuyOrder) continue;
 

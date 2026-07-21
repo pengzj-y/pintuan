@@ -64,4 +64,22 @@ public class DCCService {
         return "0".equals(cacheOpenSwitch);
     }
 
+    // ========== Setter 方法（供 DCCController 立即更新本地配置） ==========
+
+    public void setDowngradeSwitch(String downgradeSwitch) {
+        this.downgradeSwitch = downgradeSwitch;
+    }
+
+    public void setCutRange(String cutRange) {
+        this.cutRange = cutRange;
+    }
+
+    public void setScBlacklist(String scBlacklist) {
+        this.scBlacklist = scBlacklist;
+    }
+
+    public void setCacheOpenSwitch(String cacheOpenSwitch) {
+        this.cacheOpenSwitch = cacheOpenSwitch;
+    }
+
 }
