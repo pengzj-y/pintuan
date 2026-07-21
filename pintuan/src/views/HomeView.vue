@@ -89,6 +89,10 @@ function buildProducts(apiData) {
 function goProduct(product) {
   router.push(`/product/${product.goodsId}`)
 }
+
+function goSeckill() {
+  router.push('/seckill')
+}
 </script>
 
 <template>
@@ -112,7 +116,7 @@ function goProduct(product) {
         <div class="entry-icon" style="background:#FFF0E6">💰</div>
         <span>0元开团</span>
       </div>
-      <div class="entry-item">
+      <div class="entry-item" @click="goSeckill">
         <div class="entry-icon" style="background:#E6F7FF">⏰</div>
         <span>限时秒杀</span>
       </div>

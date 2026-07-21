@@ -11,6 +11,7 @@ const { users, currentUserId, currentUser, switchUser, addUser, removeUser, rese
 // 底部 Tab 配置
 const tabs = [
   { path: '/home', label: '首页', icon: 'HomeFilled' },
+  { path: '/seckill', label: '秒杀', icon: 'Lightning' },
   { path: '/category', label: '分类', icon: 'Grid' },
   { path: '/orders', label: '订单', icon: 'List' },
   { path: '/profile', label: '我的', icon: 'UserFilled' },

@@ -12,6 +12,12 @@ const routes = [
     meta: { title: '拼团商城', tab: 'home' },
   },
   {
+    path: '/seckill',
+    name: 'Seckill',
+    component: () => import('@/views/SeckillView.vue'),
+    meta: { title: '限时秒杀', tab: 'seckill' },
+  },
+  {
     path: '/category',
     name: 'Category',
     component: () => import('@/views/CategoryView.vue'),
